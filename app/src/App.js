@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
 import deploy from './deploy';
 import Escrow from './Escrow';
-import { buildEscrow, fetchContracts } from './buildEscrow';
+import { buildEscrow, fetchContracts, getContractsList, updateContractsList } from './buildEscrow';
 
 const provider = new ethers.providers.Web3Provider(window.ethereum);
 
@@ -29,13 +29,14 @@ function App() {
     }
 
     async function getContracts() {
-      const deployedContracts = [
-        "0x6FF301a9F0dF1dbB0d3125fCE47B01da0F448d7a",
-        "0xFAB376a48D324C8Cafb8e084832532FEb6b2dB6f",
-        "0x85d20dbCb81e049E48be1A85e8881349DC2fcC56",
-        "0x8ffc71800d441d15fec2d86c13f30e4ea330dc05"
-      ]
-      await fetchContracts(deployedContracts, signer, escrows, setEscrows);
+      const deployedContracts = getContractsList();
+      // [
+      //   "0x6FF301a9F0dF1dbB0d3125fCE47B01da0F448d7a",
+      //   "0xFAB376a48D324C8Cafb8e084832532FEb6b2dB6f",
+      //   "0x85d20dbCb81e049E48be1A85e8881349DC2fcC56",
+      //   "0x8ffc71800d441d15fec2d86c13f30e4ea330dc05"
+      // ]
+      await fetchContracts(deployedContracts, signer, setEscrows);
     }
 
     getAccounts();
@@ -48,6 +49,8 @@ function App() {
     const value = ethers.BigNumber.from(document.getElementById('wei').value);
     const escrowContract = await deploy(signer, arbiter, beneficiary, value);
     const isApproved = await escrowContract.isApproved()
+
+    updateContractsList(escrowContract.address)
 
     const escrow = await buildEscrow(escrowContract, arbiter, beneficiary, value, isApproved, signer);
 

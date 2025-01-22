@@ -27,7 +27,7 @@ export async function buildEscrow(escrowContract, arbiter, beneficiary, value, i
   };
 }
 
-export async function fetchContracts(contractsArray, signer, escrows, setEscrows) {
+export async function fetchContracts(contractsArray, signer, setEscrows) {
   for(let i = 0; i < contractsArray.length; i++) {
     const contractAddress = contractsArray[i];
     
@@ -42,5 +42,16 @@ export async function fetchContracts(contractsArray, signer, escrows, setEscrows
   
     setEscrows((prevEscrows) => [...prevEscrows, escrow]);
   }
+}
 
+export function getContractsList() {
+  return JSON.parse(localStorage.getItem('deployedContracts')) || []
+}
+
+export function updateContractsList(contract) {
+  const storedContracts = getContractsList();
+
+  storedContracts.push(contract)
+
+  localStorage.setItem('deployedContracts', JSON.stringify(storedContracts))
 }
