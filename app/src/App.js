@@ -2,13 +2,9 @@ import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
 import deploy from './deploy';
 import Escrow from './Escrow';
+import { buildEscrow, fetchContracts, getContractsList, updateContractsList } from './buildEscrow';
 
 const provider = new ethers.providers.Web3Provider(window.ethereum);
-
-export async function approve(escrowContract, signer) {
-  const approveTxn = await escrowContract.connect(signer).approve();
-  await approveTxn.wait();
-}
 
 function App() {
   const [escrows, setEscrows] = useState([]);
@@ -21,9 +17,24 @@ function App() {
 
       setAccount(accounts[0]);
       setSigner(provider.getSigner());
+      
+      // check if current chain is sepolia, if not set it to sepolia
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+      if (chainId !== '0xaa36a7') { // Sepolia's chainId
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0xaa36a7' }]
+        })
+      }
+    }
+
+    async function getContracts() {
+      const deployedContracts = getContractsList();
+      await fetchContracts(deployedContracts, signer, escrows, setEscrows);
     }
 
     getAccounts();
+    getContracts();
   }, [account]);
 
   async function newContract() {
@@ -31,24 +42,11 @@ function App() {
     const arbiter = document.getElementById('arbiter').value;
     const value = ethers.BigNumber.from(document.getElementById('wei').value);
     const escrowContract = await deploy(signer, arbiter, beneficiary, value);
+    const isApproved = await escrowContract.isApproved()
 
+    updateContractsList(escrowContract.address)
 
-    const escrow = {
-      address: escrowContract.address,
-      arbiter,
-      beneficiary,
-      value: value.toString(),
-      handleApprove: async () => {
-        escrowContract.on('Approved', () => {
-          document.getElementById(escrowContract.address).className =
-            'complete';
-          document.getElementById(escrowContract.address).innerText =
-            "✓ It's been approved!";
-        });
-
-        await approve(escrowContract, signer);
-      },
-    };
+    const escrow = await buildEscrow(escrowContract, arbiter, beneficiary, value, isApproved, signer);
 
     setEscrows([...escrows, escrow]);
   }
