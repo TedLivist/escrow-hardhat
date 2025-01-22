@@ -27,21 +27,37 @@ export async function buildEscrow(escrowContract, arbiter, beneficiary, value, i
   };
 }
 
-export async function fetchContracts(contractsArray, signer, setEscrows) {
-  for(let i = 0; i < contractsArray.length; i++) {
-    const contractAddress = contractsArray[i];
+export async function fetchContracts(contractsArray, signer, escrows, setEscrows) {
+  // for(let i = 0; i < contractsArray.length; i++) {
     
-    const deployedContract = new ethers.Contract(contractAddress, EscrowJson.abi, signer)
+  //   const contractAddress = contractsArray[i];
+    
+  //   const deployedContract = new ethers.Contract(contractAddress, EscrowJson.abi, signer)
 
-    const arbiter = await deployedContract.arbiter();
-    const beneficiary = await deployedContract.beneficiary();
-    const value = await deployedContract.provider.getBalance(contractAddress);
-    const isApproved = await deployedContract.isApproved()
+  //   const arbiter = await deployedContract.arbiter();
+  //   const beneficiary = await deployedContract.beneficiary();
+  //   const value = await deployedContract.provider.getBalance(contractAddress);
+  //   const isApproved = await deployedContract.isApproved()
     
-    const escrow = await buildEscrow(deployedContract, arbiter, beneficiary, value, isApproved, signer)
+  //   const escrow = await buildEscrow(deployedContract, arbiter, beneficiary, value, isApproved, signer)
   
-    setEscrows((prevEscrows) => [...prevEscrows, escrow]);
-  }
+  //   setEscrows((prevEscrows) => [...prevEscrows, escrow]);
+  // }
+
+  const retrievedEscrows = await Promise.all(
+    contractsArray.map(async(contractAddress) => {
+      const deployedContract = new ethers.Contract(contractAddress, EscrowJson.abi, signer)
+
+      const arbiter = await deployedContract.arbiter();
+      const beneficiary = await deployedContract.beneficiary();
+      const value = await deployedContract.provider.getBalance(contractAddress);
+      const isApproved = await deployedContract.isApproved()
+      
+      return buildEscrow(deployedContract, arbiter, beneficiary, value, isApproved, signer)
+    })
+  )
+
+  setEscrows([...escrows, ...retrievedEscrows])
 }
 
 export function getContractsList() {

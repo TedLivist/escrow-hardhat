@@ -30,13 +30,7 @@ function App() {
 
     async function getContracts() {
       const deployedContracts = getContractsList();
-      // [
-      //   "0x6FF301a9F0dF1dbB0d3125fCE47B01da0F448d7a",
-      //   "0xFAB376a48D324C8Cafb8e084832532FEb6b2dB6f",
-      //   "0x85d20dbCb81e049E48be1A85e8881349DC2fcC56",
-      //   "0x8ffc71800d441d15fec2d86c13f30e4ea330dc05"
-      // ]
-      await fetchContracts(deployedContracts, signer, setEscrows);
+      await fetchContracts(deployedContracts, signer, escrows, setEscrows);
     }
 
     getAccounts();
